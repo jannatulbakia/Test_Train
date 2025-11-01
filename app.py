@@ -25,18 +25,43 @@ def load_model_artifacts():
     global model, scaler, label_encoders, feature_columns
     
     try:
-        if not os.path.exists('best_model.pkl'):
-            raise FileNotFoundError("Model file 'best_model.pkl' not found. Please train the model first.")
+        # Check current directory and list files for debugging
+        current_dir = os.getcwd()
+        print(f"Current directory: {current_dir}")
+        print(f"Files in current directory: {os.listdir('.')}")
         
+        # Check for each file
+        required_files = ['best_model.pkl', 'scaler.pkl', 'label_encoders.pkl', 'feature_columns.pkl']
+        missing_files = []
+        
+        for file in required_files:
+            if not os.path.exists(file):
+                missing_files.append(file)
+                print(f"⚠ File not found: {file}")
+        
+        if missing_files:
+            error_msg = f"Missing files: {', '.join(missing_files)}. Please ensure all model files are committed to git."
+            print(f"Error: {error_msg}")
+            raise FileNotFoundError(error_msg)
+        
+        print("Loading model files...")
         model = joblib.load('best_model.pkl')
-        scaler = joblib.load('scaler.pkl')
-        label_encoders = joblib.load('label_encoders.pkl')
-        feature_columns = joblib.load('feature_columns.pkl')
+        print("✓ Model loaded")
         
-        print("✓ Model and preprocessing objects loaded successfully")
+        scaler = joblib.load('scaler.pkl')
+        print("✓ Scaler loaded")
+        
+        label_encoders = joblib.load('label_encoders.pkl')
+        print("✓ Label encoders loaded")
+        
+        feature_columns = joblib.load('feature_columns.pkl')
+        print("✓ Feature columns loaded")
+        
+        print("✓ All model and preprocessing objects loaded successfully")
         return True
     except Exception as e:
-        print(f"Error loading model: {str(e)}")
+        print(f"❌ Error loading model: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
         return False
 
 def preprocess_input(data):
