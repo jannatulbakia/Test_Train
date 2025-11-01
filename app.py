@@ -279,28 +279,29 @@ def model_info():
             'type': type(e).__name__
         }), 500
 
+# Load model when module is imported (for Gunicorn deployment)
+# This runs when the module is imported, not just when run directly
+print("=" * 80)
+print("ML MODEL API SERVER - Loading models...")
+print("=" * 80)
+load_model_artifacts()
+print("=" * 80)
+
 if __name__ == '__main__':
-    print("=" * 80)
-    print("ML MODEL API SERVER")
+    # Model is already loaded above (when module is imported)
+    # Just start the server for local development
+    print("\n✓ Server starting...")
+    print("✓ API endpoints available:")
+    print("  - GET / - API information")
+    print("  - POST /predict - Make predictions (single or batch)")
+    print("  - GET /health - Health check")
+    print("  - GET /features - Get required features")
+    print("  - GET /model/info - Get model information")
+    print("\n🚀 Starting Flask server on http://localhost:5000")
     print("=" * 80)
     
-    # Load model on startup
-    if load_model_artifacts():
-        print("\n✓ Server starting...")
-        print("✓ API endpoints available:")
-        print("  - GET / - API information")
-        print("  - POST /predict - Make predictions (single or batch)")
-        print("  - GET /health - Health check")
-        print("  - GET /features - Get required features")
-        print("  - GET /model/info - Get model information")
-        print("\n🚀 Starting Flask server on http://localhost:5000")
-        print("=" * 80)
-        
-        # Run the app
-        # Use PORT environment variable for Railway/Heroku deployment, default to 5000 for local
-        port = int(os.environ.get('PORT', 5000))
-        app.run(host='0.0.0.0', port=port, debug=False)
-    else:
-        print("\n❌ Failed to load model. Please ensure you've trained the model first.")
-        print("   Run: python train_model.py")
+    # Run the app
+    # Use PORT environment variable for Railway/Heroku deployment, default to 5000 for local
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
 
