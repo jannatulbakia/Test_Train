@@ -45,8 +45,28 @@ def load_model_artifacts():
             raise FileNotFoundError(error_msg)
         
         print("Loading model files...")
-        model = joblib.load('best_model.pkl')
-        print("✓ Model loaded")
+        
+        # Try importing required modules first
+        try:
+            import sklearn
+            print("✓ scikit-learn available")
+        except ImportError as e:
+            print(f"❌ scikit-learn not available: {e}")
+            raise ImportError("scikit-learn is required but not installed. Add it to requirements.txt") from e
+        
+        try:
+            import scipy
+            print("✓ scipy available")
+        except ImportError as e:
+            print(f"⚠ scipy not available: {e} (may be needed for some models)")
+        
+        try:
+            model = joblib.load('best_model.pkl')
+            print("✓ Model loaded")
+        except ModuleNotFoundError as e:
+            print(f"❌ Module not found when loading model: {e}")
+            print("This usually means a dependency is missing. Check Railway logs.")
+            raise
         
         scaler = joblib.load('scaler.pkl')
         print("✓ Scaler loaded")
@@ -219,31 +239,45 @@ def predict_batch():
 @app.route('/features', methods=['GET'])
 def get_features():
     """Get list of required features"""
-    if feature_columns is None:
+    try:
+        if feature_columns is None:
+            return jsonify({
+                'error': 'Model not loaded',
+                'message': 'Please check Railway logs for model loading errors. Common issues: missing .pkl files or missing dependencies (scipy, scikit-learn).'
+            }), 500
+        
         return jsonify({
-            'error': 'Model not loaded'
+            'features': feature_columns,
+            'count': len(feature_columns)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'error': f'Error: {str(e)}',
+            'type': type(e).__name__
         }), 500
-    
-    return jsonify({
-        'features': feature_columns,
-        'count': len(feature_columns)
-    }), 200
 
 @app.route('/model/info', methods=['GET'])
 def model_info():
     """Get model information"""
-    if model is None:
+    try:
+        if model is None:
+            return jsonify({
+                'error': 'Model not loaded',
+                'message': 'Please check Railway logs for model loading errors. Common issues: missing .pkl files or missing dependencies (scipy, scikit-learn).'
+            }), 500
+        
+        info = {
+            'model_type': type(model).__name__,
+            'features_count': len(feature_columns) if feature_columns else 0,
+            'has_probabilities': hasattr(model, 'predict_proba')
+        }
+        
+        return jsonify(info), 200
+    except Exception as e:
         return jsonify({
-            'error': 'Model not loaded'
+            'error': f'Error: {str(e)}',
+            'type': type(e).__name__
         }), 500
-    
-    info = {
-        'model_type': type(model).__name__,
-        'features_count': len(feature_columns) if feature_columns else 0,
-        'has_probabilities': hasattr(model, 'predict_proba')
-    }
-    
-    return jsonify(info), 200
 
 if __name__ == '__main__':
     print("=" * 80)
