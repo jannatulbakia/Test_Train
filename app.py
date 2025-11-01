@@ -86,6 +86,26 @@ def preprocess_input(data):
     
     return X
 
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint - API information"""
+    return jsonify({
+        'message': 'ML Model API - Online Shopping Purchase Predictor',
+        'version': '1.0.0',
+        'status': 'online',
+        'model_loaded': model is not None,
+        'endpoints': {
+            'health': 'GET /health - Health check',
+            'predict': 'POST /predict - Make predictions (single or batch)',
+            'features': 'GET /features - Get required features',
+            'model_info': 'GET /model/info - Get model information'
+        },
+        'usage': {
+            'single_prediction': 'POST /predict with JSON body containing features',
+            'batch_prediction': 'POST /predict with JSON array of feature objects'
+        }
+    }), 200
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -209,6 +229,7 @@ if __name__ == '__main__':
     if load_model_artifacts():
         print("\n✓ Server starting...")
         print("✓ API endpoints available:")
+        print("  - GET / - API information")
         print("  - POST /predict - Make predictions (single or batch)")
         print("  - GET /health - Health check")
         print("  - GET /features - Get required features")
